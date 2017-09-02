@@ -32,6 +32,37 @@ main:
   # Save it into maxiters
   sw $v0, maxiters
 
-  
+  li $s0, 1          # n
+  li $s1, 0          # i
+  li $s2, 0          # j
+  lw $s3, N          # N
+  j nLoop
 
   jr $ra
+
+nLoop:
+  lw $t0, maxiters
+  # if n <= maxiters
+  ble $s0, $t0, iLoop
+  jr $ra
+
+iLoop:
+  blt $s1, $s3, jLoop
+  # n++ if i stops looping
+  add $s0, $s0, 1
+  b nLoop
+
+jLoop:
+  blt $s2, $s3, updatingBoard
+  # i++ if j stops looping
+  add $s0, $s0, 1
+  b iLoop
+
+updatingBoard:
+  # j++ after every loop
+  add $s2, $s2, 1
+  b jLoop
+
+neighbours:
+
+copyBackAndShow:
