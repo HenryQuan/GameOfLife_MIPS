@@ -51,19 +51,58 @@ iLoop:
   blt $s1, $s3, jLoop
   # n++ if i stops looping
   add $s0, $s0, 1
-  b nLoop
+  j nLoop
 
 jLoop:
   blt $s2, $s3, updatingBoard
   # i++ if j stops looping
   add $s0, $s0, 1
-  b iLoop
+  j iLoop
 
 # Do real stuff here
 updatingBoard:
-  # j++ after every loop
+  # nn = neighbours(i, j)
+  move $a0, $s1
+  move $a1, $s2
+  jal neighbours
+  # t0 is the return value, t1 is board[i][j]
+  move $s4, $v0
+  mul $t1, $a0, $s3
+  add $t1, $t1, $a1
+
+  beq $t1, 1, isPattern
+  beq $t0, 3, setPattern
+  jal removePattern
+
+# if it is 1
+isPattern:
+  blt $s4, 2, removePattern
+  beq $s4, 2, setPattern
+  beq $s4, 3, setPattern
+  j removePattern
+
+# Set as 1
+setPattern:
+  # t1 = N * i + j
+  mul $t1, $s1, $s3
+  add $t1, $t1, $s2
+  # set it 1
+  sb board($t1), 1
+  j increaseJ
+
+# Set as 0
+removePattern:
+  # t1 = N * i + j
+  mul $t1, $s1, $s3
+  add $t1, $t1, $s2
+  # set it as k (a2)
+  sb board($t1), 0
+  j increaseJ
+
+increaseJ:
+  # j++
   add $s2, $s2, 1
-  b jLoop
+  j jLoop
 
 # int neighbours(int i ($a0), int j ($a1))
 neighbours:
