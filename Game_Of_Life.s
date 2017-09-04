@@ -87,7 +87,8 @@ setPattern:
   mul $t1, $s1, $s3
   add $t1, $t1, $s2
   # set it 1
-  sb board($t1), 1
+  lb $t2, 1
+  sb $t2, board($t1)
   j increaseJ
 
 # Set as 0
@@ -96,7 +97,8 @@ removePattern:
   mul $t1, $s1, $s3
   add $t1, $t1, $s2
   # set it as k (a2)
-  sb board($t1), 0
+  lb $t2, 0 
+  sb $t2, board($t1)
   j increaseJ
 
 increaseJ:
@@ -109,9 +111,9 @@ neighbours:
   li $s4, 0       # nn = 0
   li $s5, -1      # x = -1
   li $s6, -1      # y = -1
-  ble    $s5, 1, xLoop
+  ble $s5, 1, yLoop
   # return nn ($s4)
-  li $v0, $s4
+  move $v0, $s4
   jr $ra
 
 yLoop:
@@ -141,9 +143,9 @@ updatingNN:
   add $t0, $a0, $s5
   # t2 is the index, N * t0 + t1
   mul $t2, $s3, $t0
-  add $t2, $t2, $1
+  add $t2, $t2, $t1
   # Load it into t3
-  lb $t3, board($t2))
+  lb $t3, board($t2)
 
 ZeroXAndY:
   beq $s6, 0, increaseY
@@ -162,3 +164,5 @@ increaseY:
 
 # void copyBackAndShow()
 copyBackAndShow:
+
+
