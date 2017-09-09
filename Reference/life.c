@@ -43,7 +43,6 @@ int neighbours(int i, int j)
          if (i+x < 0 || i+x > N-1) continue;
          if (j+y < 0 || j+y > N-1) continue;
          if (x == 0 && y == 0) continue;
-         printf("x: %d, y: %d\ni: %d, j: %d\n[i+x][j+y]:%d\n", x, y, i, j, (i + x) * N + (j + y));
          if (board[i+x][j+y] == 1) nn++;
         }
     }

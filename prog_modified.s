@@ -5,16 +5,17 @@
 N: .word 10  # gives board dimensions
 
 board:
-   .byte 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
-   .byte 1, 1, 0, 0, 0, 0, 0, 0, 0, 0
-   .byte 0, 0, 0, 1, 0, 0, 0, 0, 0, 0
-   .byte 0, 0, 1, 0, 1, 0, 0, 0, 0, 0
-   .byte 0, 0, 0, 0, 1, 0, 0, 0, 0, 0
-   .byte 0, 0, 0, 0, 1, 1, 1, 0, 0, 0
-   .byte 0, 0, 0, 1, 0, 0, 1, 0, 0, 0
-   .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
-   .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
-   .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
+  .byte 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  .byte 1, 1, 0, 0, 0, 0, 0, 0, 0, 0
+  .byte 0, 0, 0, 1, 0, 0, 0, 0, 0, 0
+  .byte 0, 0, 1, 0, 1, 0, 0, 0, 0, 0
+  .byte 0, 0, 0, 0, 1, 0, 0, 0, 0, 0
+  .byte 0, 0, 0, 0, 1, 1, 1, 0, 0, 0
+  .byte 0, 0, 0, 1, 0, 0, 1, 0, 0, 0
+  .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
+  .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
+  .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
+
 newBoard: .space 100
 maxiters: .space 4
 one: .byte 1
@@ -25,9 +26,7 @@ afterString: .asciiz "=== After iteration "
 restString: .asciiz " ===\n"
 dot: .asciiz "."
 hash: .asciiz "#"
-updatingboard: .asciiz "updating_board\n"
 eol: .asciiz "\n"
-comma: .asciiz ", "
 
   .text
   .globl main
@@ -54,8 +53,6 @@ main:
   li $s2, 0          # j
   lw $s3, N          # N
   li $s4, 0          # nn = 0
-  li $s5, -1         # x = -1
-  li $s6, -1         # y = -1
   lw $s7, maxiters
   jal nLoop
 
@@ -236,25 +233,29 @@ copy_show:
   li $t2, 0
   mul $t2, $t0, $s3
   add $t2, $t2, $t1
+
   # load data from newBoard
   lb $t3, newBoard($t2)
   sb $t3, board($t2)
 
-  beq $t3, 0, printDot
-  jal printHash
+  lb $t4, zero
+  beq $t3, $t4, printDot
+  j printHash
 
 printDot:
   la $a0, dot
   li $v0, 4
   syscall
   # increase j
-  addi $t1, $t1, 1
-  j jLoopPrint
+  j increasePrintJ
 
 printHash:
   la $a0, hash
   li $v0, 4
   syscall
   # increase j
+  j increasePrintJ
+
+increasePrintJ:
   addi $t1, $t1, 1
   j jLoopPrint
