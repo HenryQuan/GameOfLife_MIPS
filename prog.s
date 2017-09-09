@@ -1,4 +1,3 @@
-newBoard: .space 100
 maxiters: .space 4
 one: .byte 1
 zero: .byte 0
