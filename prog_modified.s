@@ -1,9 +1,33 @@
-  .data
+# board.s ... Game of Life on a 10x10 grid
+
+   .data
+
+N: .word 10  # gives board dimensions
+
+board:
+   .byte 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+   .byte 1, 1, 0, 0, 0, 0, 0, 0, 0, 0
+   .byte 0, 0, 0, 1, 0, 0, 0, 0, 0, 0
+   .byte 0, 0, 1, 0, 1, 0, 0, 0, 0, 0
+   .byte 0, 0, 0, 0, 1, 0, 0, 0, 0, 0
+   .byte 0, 0, 0, 0, 1, 1, 1, 0, 0, 0
+   .byte 0, 0, 0, 1, 0, 0, 1, 0, 0, 0
+   .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
+   .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
+   .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
+
+newBoard: .space 100
 maxiters: .space 4
 # Strings for output
 iterationString: .asciiz "# Iterations: "
 afterString: .asciiz "=== After iteration "
 restString: .asciiz " ===\n"
+dot: .asciiz "."
+hash: .asciiz "#"
+nloop: .asciiz "nLoop\n"
+iloop: .asciiz "iLoop\n"
+jloop: .asciiz "jLoop\n"
+updatingboard: .asciiz "updating_board\n"
 eol: .asciiz "\n"
 
   .text
@@ -22,7 +46,7 @@ main:
   syscall
   li $v0, 5
   syscall
-  # save it into maxiters
+  # save it into s7
   sw $v0, maxiters
 
   # setting up some global variables
@@ -33,8 +57,10 @@ main:
   li $s4, 0          # nn = 0
   li $s5, -1         # x = -1
   li $s6, -1         # y = -1
+  lw $s7, maxiters
   jal nLoop
 
+exit:
   # epilogue
   lw   $ra, ($sp)
   addi $sp, $sp, 4
@@ -44,48 +70,52 @@ main:
 
 # Three for loops here
 nLoop:
-  lw $t0, maxiters
+  la $a0, nloop
+  li $v0, 4
+  syscall
   # if n <= maxiters
-  ble $s0, $t0, iLoop
+  ble $s0, $s7, iLoop
+  j exit
+
+iLoop:
+  la $a0, iloop
+  li $v0, 4
+  syscall
+  blt $s1, $s3, jLoop
 
   # printing stuff here
   la $a0, afterString
   li $v0, 4
   syscall
-  # since index starts from 0, print index + 1
-  lw $t0, 0
-  add $t0, $s0, $t0
-  lw $a0, $t0
+  move $a0, $s0
   li $v0, 1
   syscall
   la $a0, restString
   li $v0, 4
   syscall
-
   # copyBackAndShow
+  jal copyBackAndShow
 
-  jr $ra
+  # n++ and reset i
+  addi $s0, $s0, 1
+  li $s1, 0
 
-iLoop:
-  blt $s1, $s3, jLoop
-  # n++ if i stops looping
-  add $s0, $s0, 1
   j nLoop
 
 jLoop:
+  la $a0, jloop
+  li $v0, 4
+  syscall
   blt $s2, $s3, updating_board
-  # i++ if j stops looping
+  # i++ and reset j
   add $s1, $s1, 1
+  li $s2, 0
   j iLoop
 
 # Do real stuff here
 updating_board:
-  # nn = neighbours(i, j)
-  move $a0, $s1
-  move $a1, $s2
   jal neighbours
   # calculate index here, v0 is the return value
-  move $s4, $v0
   mul $t1, $s1, $s3
   add $t1, $t1, $s2
 
@@ -108,7 +138,7 @@ setPattern:
   add $t1, $t1, $s2
   # set it 1
   lb $t2, 1
-  sb $t2, board($t1)
+  sb $t2, newBoard($t1)
   j increaseJ
 
 # Set as 0
@@ -117,8 +147,7 @@ removePattern:
   mul $t1, $s1, $s3
   add $t1, $t1, $s2
   # set it as k (a2)
-  lb $t2, 0
-  sb $t2, board($t1)
+  sb $0, newBoard($t1)
   j increaseJ
 
 increaseJ:
@@ -128,20 +157,23 @@ increaseJ:
 
 # int neighbours(int i ($a0), int j ($a1))
 neighbours:
-  jal xLoop
-  # return nn ($s4)
-  move $v0, $s4
-  jr $ra
-
-xLoop:
+  # reset
+  li $s4, 0
+  li $s5, -1
+  li $s6, -1
   ble $s5, 1, yLoop
+  # return nn ($s4)
+  move $a0, $s4
+  li $v0, 1
+  syscall
+
   jr $ra
 
 yLoop:
   ble $s6, 1, getting_nn
   # x++ and go back
   add $s5, $s5, 1
-  j xLoop
+  jr $ra
 
 getting_nn:
   # t0 = i + x
@@ -177,13 +209,59 @@ x_is_zero:
 
 increase_nn:
   # nn++
-  add $s4, $4, 1
+  addi $s4, $4, 1
   j increaseY
 
 increaseY:
   # y++ and go back
-  add $s6, $s6, 1
+  addi $s6, $s6, 1
   j yLoop
 
 # void copyBackAndShow()
 copyBackAndShow:
+  li $t0, 0         # i
+  li $t1, 0         # j
+  j iLoopPrint
+
+iLoopPrint:
+  blt $t0, $s3, jLoopPrint
+  jr $ra
+
+jLoopPrint:
+  blt $t1, $s3, copy_show
+  # increase i and reset j
+  addi $t0, $t0, 1
+  li $t1, 0
+  # print \n
+  la $a0, eol
+  li $v0, 4
+  syscall
+  j iLoopPrint
+
+copy_show:
+  # calculate index i * N + j
+  li $t2, 0
+  mul $t2, $t0, $s3
+  add $t2, $t2, $t1
+  # load data from newBoard
+  lb $t3, newBoard($t2)
+  sb $t3, board($t2)
+
+  beq $t3, 0, printDot
+  jal printHash
+
+printDot:
+  la $a0, dot
+  li $v0, 4
+  syscall
+  # increase j
+  addi $t1, $t1, 1
+  j jLoopPrint
+
+printHash:
+  la $a0, hash
+  li $v0, 4
+  syscall
+  # increase j
+  addi $t1, $t1, 1
+  j jLoopPrint
