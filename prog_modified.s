@@ -1,21 +1,3 @@
-# board.s ... Game of Life on a 10x10 grid
-
-   .data
-
-N: .word 10  # gives board dimensions
-
-board:
-  .byte 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  .byte 1, 1, 0, 0, 0, 0, 0, 0, 0, 0
-  .byte 0, 0, 0, 1, 0, 0, 0, 0, 0, 0
-  .byte 0, 0, 1, 0, 1, 0, 0, 0, 0, 0
-  .byte 0, 0, 0, 0, 1, 0, 0, 0, 0, 0
-  .byte 0, 0, 0, 0, 1, 1, 1, 0, 0, 0
-  .byte 0, 0, 0, 1, 0, 0, 1, 0, 0, 0
-  .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
-  .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
-  .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
-
 newBoard: .space 100
 maxiters: .space 4
 one: .byte 1
@@ -107,8 +89,9 @@ updating_board:
 
   # load byte from board
   lb $t2, board($t1)
-  beq $t2, 1, isPattern
-  beq $s3, 3, setPattern
+  lb $t3, one
+  beq $t2, $t3, isPattern
+  beq $s4, 3, setPattern
   j removePattern
 
 # if it is 1
