@@ -15,20 +15,19 @@ board:
    .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
    .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
    .byte 0, 0, 1, 0, 0, 0, 0, 0, 0, 0
-
 newBoard: .space 100
 maxiters: .space 4
+one: .byte 1
+zero: .byte 0
 # Strings for output
 iterationString: .asciiz "# Iterations: "
 afterString: .asciiz "=== After iteration "
 restString: .asciiz " ===\n"
 dot: .asciiz "."
 hash: .asciiz "#"
-nloop: .asciiz "nLoop\n"
-iloop: .asciiz "iLoop\n"
-jloop: .asciiz "jLoop\n"
 updatingboard: .asciiz "updating_board\n"
 eol: .asciiz "\n"
+comma: .asciiz ", "
 
   .text
   .globl main
@@ -70,19 +69,12 @@ exit:
 
 # Three for loops here
 nLoop:
-  la $a0, nloop
-  li $v0, 4
-  syscall
   # if n <= maxiters
   ble $s0, $s7, iLoop
   j exit
 
 iLoop:
-  la $a0, iloop
-  li $v0, 4
-  syscall
   blt $s1, $s3, jLoop
-
   # printing stuff here
   la $a0, afterString
   li $v0, 4
@@ -103,25 +95,23 @@ iLoop:
   j nLoop
 
 jLoop:
-  la $a0, jloop
-  li $v0, 4
-  syscall
   blt $s2, $s3, updating_board
   # i++ and reset j
-  add $s1, $s1, 1
+  addi $s1, $s1, 1
   li $s2, 0
   j iLoop
 
 # Do real stuff here
 updating_board:
   jal neighbours
-  # calculate index here, v0 is the return value
+  # calculate index here, i * N + j
   mul $t1, $s1, $s3
   add $t1, $t1, $s2
 
+  # load byte from board
   lb $t2, board($t1)
   beq $t2, 1, isPattern
-  beq $t2, 3, setPattern
+  beq $s3, 3, setPattern
   j removePattern
 
 # if it is 1
@@ -137,8 +127,8 @@ setPattern:
   mul $t1, $s1, $s3
   add $t1, $t1, $s2
   # set it 1
-  lb $t2, 1
-  sb $t2, newBoard($t1)
+  lb $t0, one
+  sb $t0, newBoard($t1)
   j increaseJ
 
 # Set as 0
@@ -146,70 +136,73 @@ removePattern:
   # t1 = N * i + j
   mul $t1, $s1, $s3
   add $t1, $t1, $s2
-  # set it as k (a2)
-  sb $0, newBoard($t1)
+  # set it 0
+  lb $t0, zero
+  sb $t0, newBoard($t1)
   j increaseJ
 
 increaseJ:
   # j++
-  add $s2, $s2, 1
+  addi $s2, $s2, 1
   j jLoop
 
-# int neighbours(int i ($a0), int j ($a1))
+# int neighbours(int i (s1), int j (s2))
 neighbours:
   # reset
   li $s4, 0
   li $s5, -1
   li $s6, -1
-  ble $s5, 1, yLoop
-  # return nn ($s4)
-  move $a0, $s4
-  li $v0, 1
-  syscall
+  j xLoop
 
+xLoop:
+  ble $s5, 1, yLoop
   jr $ra
 
 yLoop:
   ble $s6, 1, getting_nn
-  # x++ and go back
-  add $s5, $s5, 1
-  jr $ra
+  # x++ and reset y
+  addi $s5, $s5, 1
+  li $s6, -1
+  j xLoop
 
 getting_nn:
   # t0 = i + x
-  add $t0, $a0, $s5
+  add $t0, $s1, $s5
   blt $t0, 0, increaseY
+
   # t1 = N - 1
   sub $t1, $s3, 1
   bgt $t0, $t1, increaseY
-  # Reset t0 and t0 = j + y
-  li $t0, 0
-  add $t0, $a1, $s6
+
+  # t0 = j + y
+  add $t0, $s2, $s6
   blt $t0, 0, increaseY
-  blt $t0, $t1, increaseY
+  bgt $t0, $t1, increaseY
   # If x == 0
   beq $s5, 0, x_is_zero
-  # make t1 = t0, reset t0,
+  j y_isnot_zero
+
+y_isnot_zero:
   # t0 = i + x, t1 = j + y
   move $t1, $t0
-  li $t0, 0
-  add $t0, $a0, $s5
+  add $t0, $s1, $s5
   # t2 is the index, N * t0 + t1
   mul $t2, $s3, $t0
   add $t2, $t2, $t1
   # Load it into t3
   lb $t3, board($t2)
-  beq $t3, 1, increase_nn
+  lb $t4, one
+  beq $t3, $t4, increase_nn
   j increaseY
 
 x_is_zero:
   beq $s6, 0, increaseY
   # Go back if x == 0 but y != 0
-  jr $ra
+  j y_isnot_zero
 
 increase_nn:
-  # nn++
-  addi $s4, $4, 1
+  # n++
+  addi $s4, $s4, 1
   j increaseY
 
 increaseY:

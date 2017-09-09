@@ -209,7 +209,7 @@ x_is_zero:
 
 increase_nn:
   # nn++
-  addi $s4, $4, 1
+  addi $s4, $s4, 1
   j increaseY
 
 increaseY:
