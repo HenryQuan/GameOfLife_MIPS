@@ -3,4 +3,4 @@ Game Of Life in MIPS -- An assignment for [COMP1521](https://cgi.cse.unsw.edu.au
 
 It is completely written in the MIPS assembly language. 
 
-~~I just could not imagine that I am actually using assembly~~
+~~You say life is hard, then maybe you should write Game Of Life in MIPS~~
